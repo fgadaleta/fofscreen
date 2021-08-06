@@ -35,7 +35,7 @@ TBD
 
 ### Build and Run
 
-From root
+Build all workspaces. From root
 
 `cargo build --features download-models --workspace`
 

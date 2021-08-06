@@ -7,3 +7,4 @@ authors = ["frag <francesco@amethix.com>"]
 members = ["capture", "detect"]
 
 [dependencies]
+clap = "2.33.3"

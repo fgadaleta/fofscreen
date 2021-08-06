@@ -1,11 +1,10 @@
 use clap::{App, Arg};
-use glium::{
-    implement_vertex, index::PrimitiveType, program, texture::RawImage2d, uniform, Display,
-    IndexBuffer, Surface, Texture2d, VertexBuffer,
-};
+use flume::Receiver;
+use glium::{Display, IndexBuffer, Surface, Texture2d, VertexBuffer, implement_vertex, index::{self, PrimitiveType}, program, texture::RawImage2d, uniform};
 use glutin::{event_loop::EventLoop, window::WindowBuilder, ContextBuilder};
 use nokhwa::{query_devices, Camera, CaptureAPIBackend, FrameFormat};
 use std::time::Instant;
+use image::{ImageBuffer, Rgb};
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
@@ -21,6 +20,79 @@ pub struct Vertex {
 // use fofscreen::landmark_prediction::*;
 // use fofscreen::face_encoding::*;
 // use image::*;
+
+
+
+fn capture_loop(index: usize, width: u32, height:u32, fps: u32, format: FrameFormat, backend_value: CaptureAPIBackend, query_device: bool) -> Receiver<ImageBuffer<Rgb<u8>, Vec<u8>>> {
+
+    let (send, recv) = flume::unbounded();
+    // spawn a thread for capture
+    std::thread::spawn(move || {
+        {
+            let mut camera = Camera::new_with(index, width, height, fps, format, backend_value).unwrap();
+
+            if query_device {
+                match camera.compatible_fourcc() {
+                    Ok(fcc) => {
+                        for ff in fcc {
+                            match camera.compatible_list_by_resolution(ff) {
+                                Ok(compat) => {
+                                    println!("For FourCC {}", ff);
+                                    for (res, fps) in compat {
+                                        println!("{}x{}: {:?}", res.width(), res.height(), fps);
+                                    }
+                                }
+                                Err(why) => {
+                                    println!("Failed to get compatible resolution/FPS list for FrameFormat {}: {}", ff, why.to_string())
+                                }
+                            }
+                        }
+                    }
+                    Err(why) => {
+                        println!("Failed to get compatible FourCC: {}", why.to_string())
+                    }
+                }
+            }
+
+            // open stream
+            camera.open_stream().unwrap();
+            loop {
+                let frame = camera.frame().unwrap();
+
+                println!(
+                    "Captured frame {}x{} @ {}FPS size {}",
+                    frame.width(),
+                    frame.height(),
+                    fps,
+                    frame.len()
+                );
+                send.send(frame).unwrap()
+            }
+        }
+        // IP Camera
+        // else {
+            // dbg!("ip camera not supported");
+            // let ip_camera =
+            //     NetworkCamera::new(matches_clone.value_of("capture").unwrap().to_string())
+            //         .expect("Invalid IP!");
+            // ip_camera.open_stream().unwrap();
+            // loop {
+            //     let frame = ip_camera.frame().unwrap();
+            //     println!(
+            //         "Captured frame {}x{} @ {}FPS size {}",
+            //         frame.width(),
+            //         frame.height(),
+            //         fps,
+            //         frame.len()
+            //     );
+            //     send.send(frame).unwrap();
+            // }
+        // }
+    });
+    recv
+}
+
+
 
 
 fn main() {
@@ -153,6 +225,9 @@ fn main() {
 
         let matches_clone = matches.clone();
 
+        let recv = capture_loop(0, width, height, fps, format, backend_value, true);
+
+        /*
         let (send, recv) = flume::unbounded();
         // spawn a thread for capture
         std::thread::spawn(move || {
@@ -224,6 +299,8 @@ fn main() {
                 // }
             }
         });
+        */
+
 
         // run glium
         if matches.is_present("display") {

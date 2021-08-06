@@ -240,6 +240,7 @@ dependencies = [
  "flume",
  "glium",
  "glutin",
+ "image",
  "nokhwa",
 ]
 
@@ -871,6 +872,9 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 [[package]]
 name = "fofscreen"
 version = "0.1.0"
+dependencies = [
+ "clap",
+]
 
 [[package]]
 name = "foreign-types"
