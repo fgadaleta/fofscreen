@@ -1,0 +1,9 @@
+[package]
+name = "fofscreen"
+version = "0.1.0"
+authors = ["frag <francesco@amethix.com>"]
+
+[workspace]
+members = ["capture", "detect"]
+
+[dependencies]
