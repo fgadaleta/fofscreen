@@ -1,5 +1,6 @@
 use image::*;
 use std::ops::*;
+use cpp::*;
 
 cpp_class!(
     /// A wrapper around a `matrix<rgb_pixel>`, dlibs own image class.

@@ -3,10 +3,12 @@
 // use *;
 use image_matrix::*;
 // pub use crate::image_matrix::*;
-use crate::*;
+// use crate::*;
 use std::ops::*;
 use std::path::*;
 use std::slice;
+
+use cpp::*;
 
 cpp_class!(unsafe struct LandmarkPredictorInner as "shape_predictor");
 
