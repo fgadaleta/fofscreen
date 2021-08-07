@@ -1,10 +1,11 @@
 #![feature(test)]
 
 extern crate test;
-extern crate detect;
+// extern crate detect;
 extern crate image;
 #[macro_use]
 extern crate lazy_static;
+use crate::detect;
 
 use detect::*;
 use detect::face_detection::*;

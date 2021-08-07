@@ -38,7 +38,7 @@ impl ImageMatrix {
         let ptr = image.as_ptr();
 
         unsafe {
-           Self::new(width, height, ptr) 
+           Self::new(width, height, ptr)
         }
     }
 }
