@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-nokhwa = { version = "0.3.2", features = ["input-uvc"] }
+nokhwa = { version = "0.3.2", features = ["input-uvc", "input-v4l"] }
 clap = "2.33.3"
 glium = "0.30.0"
 glutin = "0.27.0"
