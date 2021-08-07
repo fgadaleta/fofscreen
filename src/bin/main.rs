@@ -3,17 +3,8 @@ extern crate nokhwa;
 
 use clap::{App, Arg};
 use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
+use fofscreen::capture::utils::{capture_loop, display_frames};
 
-// use fofscreen;
-
-// use crate::capture::utils::{capture_loop, display_frames};
-// use self::capture_loop;
-// fofscreen::capture::utils::{capture_loop, display_frames};
-
-// use capture::utils::{capture_loop, display_frames};
-// use crate::capture_loop;
-// use fofscreen::capture;
-// use crate::capture;
 
 fn main() {
     let matches = App::new("fofscreen")
