@@ -233,17 +233,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "capture"
-version = "0.1.0"
-dependencies = [
- "clap",
- "flume",
- "glium",
- "glutin",
- "nokhwa",
-]
-
-[[package]]
 name = "cc"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -713,18 +702,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "detect"
-version = "0.1.0"
-dependencies = [
- "bzip2",
- "cpp",
- "cpp_build",
- "image",
- "lazy_static",
- "reqwest",
-]
-
-[[package]]
 name = "dispatch"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -851,9 +828,9 @@ dependencies = [
 
 [[package]]
 name = "flume"
-version = "0.10.7"
+version = "0.10.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddad16e8529759736a9ce4cdf078ed702e45d3c5b0474a1c65f5149e9fa7f1eb"
+checksum = "2e90cc80fad5bb391b38127896b0fa27d97e7fef74742797f4da518d67e1292f"
 dependencies = [
  "futures-core",
  "futures-sink",
@@ -871,6 +848,19 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 [[package]]
 name = "fofscreen"
 version = "0.1.0"
+dependencies = [
+ "bzip2",
+ "clap",
+ "cpp",
+ "cpp_build",
+ "flume",
+ "glium",
+ "glutin",
+ "image",
+ "lazy_static",
+ "nokhwa",
+ "reqwest",
+]
 
 [[package]]
 name = "foreign-types"
@@ -1655,9 +1645,9 @@ dependencies = [
 
 [[package]]
 name = "nanorand"
-version = "0.5.2"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac1378b66f7c93a1c0f8464a19bf47df8795083842e5090f4b7305973d5a22d0"
+checksum = "729eb334247daa1803e0a094d0a5c55711b85571179f5ec6e53eccfdf7008958"
 dependencies = [
  "getrandom",
 ]
@@ -1783,6 +1773,7 @@ dependencies = [
  "thiserror",
  "usb_enumeration",
  "uvc",
+ "v4l",
 ]
 
 [[package]]
@@ -3116,6 +3107,26 @@ checksum = "e3675c448fbdc98cbdc4f755a541d41154d153eb3112686be533940ae925eb00"
 dependencies = [
  "bindgen",
  "uvc-src",
+]
+
+[[package]]
+name = "v4l"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f6eca58bca86b4b353b55e18828694f91e83dd7e9c4d7f127515e4687d5a8e9"
+dependencies = [
+ "bitflags",
+ "libc",
+ "v4l2-sys-mit",
+]
+
+[[package]]
+name = "v4l2-sys-mit"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0c932c06df4af1dfb229f604214f2a87993784596ff33ffdadcba1b5519254e"
+dependencies = [
+ "bindgen",
 ]
 
 [[package]]

@@ -13,20 +13,24 @@
 //! To determine if two face encodings belong to the same face, the euclideon distance between them can be used.
 //! For the dlib encodings, a distance of 0.6 is generally appropriate.
 
+
+
 // Ignore the `forget_copy` clippy lint to remove noise from `cargo clippy` output
-#![cfg_attr(feature = "cargo-clippy", allow(forget_copy))]
+// #![cfg_attr(feature = "cargo-clippy", allow(forget_copy))]
 
-#![recursion_limit="1024"]
+// #![recursion_limit="1024"]
 #[macro_use]
-extern crate cpp;
-extern crate image;
+// extern crate cpp;
+// extern crate image;
+use cpp;
+use image;
 
-mod image_matrix;
-pub mod face_detection;
-pub mod landmark_prediction;
-pub mod face_encoding;
+// pub mod image_matrix;
+// pub mod face_detection;
+// pub mod landmark_prediction;
+// pub mod face_encoding;
+
 pub use image_matrix::*;
-
 
 use std::path::*;
 use std::ffi::*;

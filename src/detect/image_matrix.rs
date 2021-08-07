@@ -1,5 +1,6 @@
 use image::*;
 use std::ops::*;
+use cpp::*;
 
 cpp_class!(
     /// A wrapper around a `matrix<rgb_pixel>`, dlibs own image class.
@@ -38,7 +39,7 @@ impl ImageMatrix {
         let ptr = image.as_ptr();
 
         unsafe {
-           Self::new(width, height, ptr) 
+           Self::new(width, height, ptr)
         }
     }
 }

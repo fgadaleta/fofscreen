@@ -13,6 +13,9 @@ These include:
 
 face_recognition requires dlib to be installed.
 
+
+
+
 on (atleast) OSX, I _believe_ lapack and openblas also need to be installed.
 
 face_recognition includes a `download-models` feature flag that can be used with `cargo build --features download-models`.
@@ -29,13 +32,35 @@ if this feature flag is enabled, the matching structs will have `Default::defaul
 ## Getting started
 
 ### Install dlib
+#### Install from Python
 
-TBD
+`pip install dlib --verbose`
+
+
+#### Install from sources
+
+```
+wget http://dlib.net/files/dlib-19.22.tar.bz2
+tar xvf dlib-19.22.tar.bz2
+cd dlib*
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Release
+sudo make install
+sudo ldconfig
+```
+
+*Optional install*
+
+`sudo apt-get install -y libuvc-dev `
+
+
 
 
 ### Build and Run
 
-From root
+Build all workspaces. From root
 
 `cargo build --features download-models --workspace`
 
