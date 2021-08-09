@@ -5,15 +5,15 @@ use std::ops::*;
 use std::slice;
 use std::fmt;
 
-// use crate::*;
 // use *;
-use landmark_prediction::*;
-use image_matrix::*;
-use cpp::*;
+use crate::*;
 
 // use landmark_prediction::*;
-// pub use crate::image_matrix::*;
-// pub use crate::path_as_cstring;
+// use image_matrix::*;
+
+use crate::landmark_prediction::*;
+use crate::image_matrix::*;
+
 
 cpp_class!(unsafe struct FaceEncodingNetworkInner as "face_encoding_nn");
 

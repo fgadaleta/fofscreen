@@ -1,21 +1,17 @@
 #![feature(test)]
 
 extern crate test;
-// extern crate detect;
-// extern crate image;
-use image;
+
 #[macro_use]
 extern crate lazy_static;
-use fofscreen::detect;
+use fofscreen::face_detection::*;
+use fofscreen::landmark_prediction::*;
+use fofscreen::face_encoding::*;
+use fofscreen::image_matrix::*;
 
-use detect::*;
-use detect::face_detection::*;
-use detect::landmark_prediction::*;
-use detect::face_encoding::*;
-use image::*;
 
+use image::{RgbImage};
 use std::path::*;
-
 use test::Bencher;
 
 fn load_image(filename: &str) -> RgbImage {

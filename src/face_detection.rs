@@ -2,14 +2,12 @@
 
 // use *;
 // use image_matrix::*;
-// pub use crate::image_matrix::*;
-// pub use crate::{path_as_cstring, path_for_file};
-// pub use crate::*;
+use crate::image_matrix::*;
+use crate::*;
 
 use std::ops::*;
 use std::path::*;
 use std::{fmt, slice};
-use cpp::*;
 
 
 cpp_class!(unsafe struct FaceDetectorInner as "frontal_face_detector");

@@ -13,9 +13,6 @@ These include:
 
 face_recognition requires dlib to be installed.
 
-
-
-
 on (atleast) OSX, I _believe_ lapack and openblas also need to be installed.
 
 face_recognition includes a `download-models` feature flag that can be used with `cargo build --features download-models`.

@@ -3,10 +3,62 @@ extern crate nokhwa;
 
 use clap::{App, Arg};
 use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
+
+use fofscreen::face_detection::*;
+use fofscreen::face_encoding::*;
+use fofscreen::landmark_prediction::*;
+use fofscreen::image_matrix::*;
 use fofscreen::capture::utils::{capture_loop, display_frames};
+
+use image::{RgbImage};
+use std::path::*;
+
+#[macro_use]
+extern crate lazy_static;
+
+fn load_image(filename: &str) -> RgbImage {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("benches").join(filename);
+    dbg!("Loading file ", &path);
+    image::open(&path).unwrap().to_rgb()
+}
+
+lazy_static! {
+    static ref DETECTOR: FaceDetector = FaceDetector::default();
+    static ref DETECTOR_CNN: FaceDetectorCnn = FaceDetectorCnn::default();
+    static ref PREDICTOR: LandmarkPredictor = LandmarkPredictor::default();
+    static ref MODEL: FaceEncodingNetwork = FaceEncodingNetwork::default();
+
+    static ref OBAMA_1: RgbImage = load_image("obama_1.jpg");
+    static ref OBAMA_2: RgbImage = load_image("obama_2.jpg");
+
+    static ref OBAMA_1_MATRIX: ImageMatrix = ImageMatrix::from_image(&OBAMA_1);
+    static ref OBAMA_2_MATRIX: ImageMatrix = ImageMatrix::from_image(&OBAMA_2);
+}
+
+#[cfg(feature = "download-models")]
+fn initialize() {
+    lazy_static::initialize(&DETECTOR);
+    lazy_static::initialize(&DETECTOR_CNN);
+    lazy_static::initialize(&PREDICTOR);
+    lazy_static::initialize(&MODEL);
+
+    lazy_static::initialize(&OBAMA_1);
+    lazy_static::initialize(&OBAMA_2);
+
+    lazy_static::initialize(&OBAMA_1_MATRIX);
+    lazy_static::initialize(&OBAMA_2_MATRIX);
+}
+
+#[cfg(not(feature = "download-models"))]
+fn initialize() {
+    panic!("You need to run these benchmarks with '--features download-models'.");
+}
 
 
 fn main() {
+    initialize();
+
+
     let matches = App::new("fofscreen")
         .version("0.1.0")
         .author("frag <franccesco@amethix.com>")
