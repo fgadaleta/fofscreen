@@ -2,7 +2,7 @@ extern crate clap;
 extern crate nokhwa;
 
 use clap::{App, Arg};
-use fofscreen::Rectangle;
+// use fofscreen::Rectangle;
 use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
 
 use fofscreen::face_detection::*;
@@ -19,7 +19,7 @@ extern crate lazy_static;
 
 fn load_image(filename: &str) -> RgbImage {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("benches").join(filename);
-    dbg!("Loading file ", &path);
+    // dbg!("Loading file ", &path);
     image::open(&path).unwrap().to_rgb()
 }
 
@@ -28,7 +28,6 @@ lazy_static! {
     static ref DETECTOR_CNN: FaceDetectorCnn = FaceDetectorCnn::default();
     static ref PREDICTOR: LandmarkPredictor = LandmarkPredictor::default();
     static ref MODEL: FaceEncodingNetwork = FaceEncodingNetwork::default();
-
     static ref FRAG_FRONTAL_REF: RgbImage = load_image("frag-frontal-ref.png");
     static ref FRAG_FRONTAL_MATRIX: ImageMatrix = ImageMatrix::from_image(&FRAG_FRONTAL_REF);
 }
@@ -42,11 +41,6 @@ fn initialize() {
     lazy_static::initialize(&PREDICTOR);
     println!("Initializing model");
     lazy_static::initialize(&MODEL);
-
-    // lazy_static::initialize(&OBAMA_1);
-    // lazy_static::initialize(&OBAMA_2);
-    // lazy_static::initialize(&OBAMA_1_MATRIX);
-    // lazy_static::initialize(&OBAMA_2_MATRIX);
 }
 
 #[cfg(not(feature = "download-models"))]
@@ -116,6 +110,13 @@ fn main() {
             .help("Set the capture backend. Pass AUTO for automatic backend, UVC to query using UVC, V4L to query using Video4Linux, GST to query using Gstreamer, OPENCV to use OpenCV.")
             .default_value("AUTO")
             .takes_value(true))
+
+        .arg(Arg::with_name("reference")
+            .short("fer")
+            .long("reference")
+            .help("Pass a directory of reference face images")
+            .takes_value(true))
+
         .arg(Arg::with_name("display")
             .short("d")
             .long("display")
@@ -181,8 +182,13 @@ fn main() {
             match matches.value_of("format").unwrap() {
                 "YUYV" => FrameFormat::YUYV,
                 _ => FrameFormat::MJPEG,
-            }
-        };
+                }
+            };
+
+        let reference = matches.value_of("reference").unwrap();
+        let reference_path = Path::new(reference);
+        println!("Reference images from {:?}", &reference_path);
+        // TODO wip
 
         println!("Initializing recognition engine...");
         initialize();
@@ -193,6 +199,9 @@ fn main() {
         let ref_rect = ref_locations[0];
         let ref_landmarks = PREDICTOR.face_landmarks(&FRAG_FRONTAL_MATRIX, &ref_rect);
         let ref_encoding = &MODEL.get_face_encodings(&FRAG_FRONTAL_MATRIX, &[ref_landmarks], 0)[0];
+
+        // TODO pass directory of reference faces and create a vector of encodings
+        // TODO later check current frame encoding with vector of encodings and return the first found
         println!("done.");
 
         let recv = capture_loop(0, width, height, fps, format, backend_value, true);
@@ -209,26 +218,21 @@ fn main() {
                     let frame_matrix: ImageMatrix = ImageMatrix::from_image(&frame);
                     let face_locations = DETECTOR.face_locations(&frame_matrix);
 
-
                     if face_locations.len() > 0 {
-                        println!("Found a face...");
+                        println!("uh oh found a face...");
                         let rect = face_locations[0];
                         let frame_landmarks = PREDICTOR.face_landmarks(&frame_matrix, &rect);
                         let a_encoding = &MODEL.get_face_encodings(&frame_matrix, &[frame_landmarks], 0)[0];
                         // dbg!(&a_encoding);
 
-                        // TODO precompute encodings of reference image to recognize and calculate distance
+                        // Calculate distance of precomputed encodings of reference image
                         println!("Calculating similarity...");
                         let distance = a_encoding.distance(&ref_encoding);
                         dbg!(&distance);
 
                     }
 
-                    println!(
-                        "Frame width {} height {} size {}",
-                        frame.width(),
-                        frame.height(),
-                       frame.len());
+                    println!("Frame width {} height {} size {}", frame.width(), frame.height(), frame.len());
 
                 } else {
                     println!("Thread terminated, closing!");
