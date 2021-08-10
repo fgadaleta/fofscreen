@@ -1,7 +1,5 @@
 //! Face detection structs.
 
-// use *;
-// use image_matrix::*;
 use crate::image_matrix::*;
 use crate::*;
 

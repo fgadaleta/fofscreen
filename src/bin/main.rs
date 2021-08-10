@@ -2,6 +2,7 @@ extern crate clap;
 extern crate nokhwa;
 
 use clap::{App, Arg};
+use fofscreen::Rectangle;
 use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
 
 use fofscreen::face_detection::*;
@@ -28,25 +29,24 @@ lazy_static! {
     static ref PREDICTOR: LandmarkPredictor = LandmarkPredictor::default();
     static ref MODEL: FaceEncodingNetwork = FaceEncodingNetwork::default();
 
-    static ref OBAMA_1: RgbImage = load_image("obama_1.jpg");
-    static ref OBAMA_2: RgbImage = load_image("obama_2.jpg");
-
-    static ref OBAMA_1_MATRIX: ImageMatrix = ImageMatrix::from_image(&OBAMA_1);
-    static ref OBAMA_2_MATRIX: ImageMatrix = ImageMatrix::from_image(&OBAMA_2);
+    static ref FRAG_FRONTAL_REF: RgbImage = load_image("frag-frontal-ref.png");
+    static ref FRAG_FRONTAL_MATRIX: ImageMatrix = ImageMatrix::from_image(&FRAG_FRONTAL_REF);
 }
 
 #[cfg(feature = "download-models")]
 fn initialize() {
+    println!("Initializing detector");
     lazy_static::initialize(&DETECTOR);
     lazy_static::initialize(&DETECTOR_CNN);
+    println!("Initializing predictor");
     lazy_static::initialize(&PREDICTOR);
+    println!("Initializing model");
     lazy_static::initialize(&MODEL);
 
-    lazy_static::initialize(&OBAMA_1);
-    lazy_static::initialize(&OBAMA_2);
-
-    lazy_static::initialize(&OBAMA_1_MATRIX);
-    lazy_static::initialize(&OBAMA_2_MATRIX);
+    // lazy_static::initialize(&OBAMA_1);
+    // lazy_static::initialize(&OBAMA_2);
+    // lazy_static::initialize(&OBAMA_1_MATRIX);
+    // lazy_static::initialize(&OBAMA_2_MATRIX);
 }
 
 #[cfg(not(feature = "download-models"))]
@@ -56,8 +56,6 @@ fn initialize() {
 
 
 fn main() {
-    initialize();
-
 
     let matches = App::new("fofscreen")
         .version("0.1.0")
@@ -186,6 +184,17 @@ fn main() {
             }
         };
 
+        println!("Initializing recognition engine...");
+        initialize();
+        println!("done.");
+
+        println!("Loading reference faces...");
+        let ref_locations = DETECTOR.face_locations(&FRAG_FRONTAL_MATRIX);
+        let ref_rect = ref_locations[0];
+        let ref_landmarks = PREDICTOR.face_landmarks(&FRAG_FRONTAL_MATRIX, &ref_rect);
+        let ref_encoding = &MODEL.get_face_encodings(&FRAG_FRONTAL_MATRIX, &[ref_landmarks], 0)[0];
+        println!("done.");
+
         let recv = capture_loop(0, width, height, fps, format, backend_value, true);
 
         // run glium
@@ -197,12 +206,30 @@ fn main() {
         else {
             loop {
                 if let Ok(frame) = recv.recv() {
+                    let frame_matrix: ImageMatrix = ImageMatrix::from_image(&frame);
+                    let face_locations = DETECTOR.face_locations(&frame_matrix);
+
+
+                    if face_locations.len() > 0 {
+                        println!("Found a face...");
+                        let rect = face_locations[0];
+                        let frame_landmarks = PREDICTOR.face_landmarks(&frame_matrix, &rect);
+                        let a_encoding = &MODEL.get_face_encodings(&frame_matrix, &[frame_landmarks], 0)[0];
+                        // dbg!(&a_encoding);
+
+                        // TODO precompute encodings of reference image to recognize and calculate distance
+                        println!("Calculating similarity...");
+                        let distance = a_encoding.distance(&ref_encoding);
+                        dbg!(&distance);
+
+                    }
+
                     println!(
                         "Frame width {} height {} size {}",
                         frame.width(),
                         frame.height(),
-                        frame.len()
-                    );
+                       frame.len());
+
                 } else {
                     println!("Thread terminated, closing!");
                     break;
