@@ -1,9 +1,9 @@
 //! Face encoding structs.
 
-use std::path::*;
-use std::ops::*;
-use std::slice;
 use std::fmt;
+use std::ops::*;
+use std::path::*;
+use std::slice;
 
 // use *;
 use crate::*;
@@ -11,16 +11,15 @@ use crate::*;
 // use landmark_prediction::*;
 // use image_matrix::*;
 
-use crate::landmark_prediction::*;
 use crate::image_matrix::*;
-
+use crate::landmark_prediction::*;
 
 cpp_class!(unsafe struct FaceEncodingNetworkInner as "face_encoding_nn");
 
 /// A face encoding network.
 #[derive(Clone)]
 pub struct FaceEncodingNetwork {
-    inner: FaceEncodingNetworkInner
+    inner: FaceEncodingNetworkInner,
 }
 
 impl FaceEncodingNetwork {
@@ -45,16 +44,24 @@ impl FaceEncodingNetwork {
         };
 
         if !deserialized {
-            Err(format!("Failed to deserialize '{}'", filename.as_ref().display()))
+            Err(format!(
+                "Failed to deserialize '{}'",
+                filename.as_ref().display()
+            ))
         } else {
-            Ok(Self {inner})
+            Ok(Self { inner })
         }
     }
 
     /// Get a number of face encodings from an image and a list of landmarks, and jitter them a certain amount.
     ///
     /// It is recommended to keep `num_jitters` at 0 unless you know what you're doing.
-    pub fn get_face_encodings(&self, image: &ImageMatrix, landmarks: &[FaceLandmarks], num_jitters: u32) -> FaceEncodings {
+    pub fn get_face_encodings(
+        &self,
+        image: &ImageMatrix,
+        landmarks: &[FaceLandmarks],
+        num_jitters: u32,
+    ) -> FaceEncodings {
         let num_faces = landmarks.len();
         let landmarks = landmarks.as_ptr();
         let net = &self.inner;
@@ -114,7 +121,6 @@ impl Default for FaceEncodingNetwork {
     }
 }
 
-
 cpp_class!(
     /// A wrapper around a `std::vector<matrix<double,0,1>>`, a vector of encodings.
     pub unsafe struct FaceEncodings as "std::vector<matrix<double,0,1>>"
@@ -149,7 +155,7 @@ cpp_class!(unsafe struct FaceEncodingInner as "matrix<double,0,1>");
 /// A wrapper around a `matrix<double,0,1>>`, an encoding.
 #[derive(Clone)]
 pub struct FaceEncoding {
-    inner: FaceEncodingInner
+    inner: FaceEncodingInner,
 }
 
 impl FaceEncoding {
@@ -169,9 +175,7 @@ impl FaceEncoding {
             })
         };
 
-        Self {
-            inner
-        }
+        Self { inner }
     }
 
     /// Calculate the euclidean distance between two encodings.
@@ -247,8 +251,5 @@ fn test_default_encoding() {
 #[test]
 fn test_sizes() {
     use std::mem::*;
-    assert_eq!(
-        size_of::<FaceEncodings>(),
-        size_of::<Vec<FaceEncoding>>()
-    );
+    assert_eq!(size_of::<FaceEncodings>(), size_of::<Vec<FaceEncoding>>());
 }

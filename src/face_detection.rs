@@ -7,7 +7,6 @@ use std::ops::*;
 use std::path::*;
 use std::{fmt, slice};
 
-
 cpp_class!(unsafe struct FaceDetectorInner as "frontal_face_detector");
 
 #[derive(Clone)]
@@ -16,7 +15,7 @@ cpp_class!(unsafe struct FaceDetectorInner as "frontal_face_detector");
 /// Pretty fast (~100ms for test images on my machine), but not as accurate (misses more faces)
 /// as the neural network face detector.
 pub struct FaceDetector {
-    inner: FaceDetectorInner
+    inner: FaceDetectorInner,
 }
 
 impl FaceDetector {
@@ -30,9 +29,7 @@ impl FaceDetector {
             })
         };
 
-        Self {
-            inner
-        }
+        Self { inner }
     }
 
     /// Detect face rectangles from an image.
@@ -60,7 +57,7 @@ cpp_class!(unsafe struct FaceDetectorCnnInner as "face_detection_cnn");
 /// This is much slower than the regular face detector (depending on the gpu), but is also much more accurate.
 #[derive(Clone)]
 pub struct FaceDetectorCnn {
-    inner: FaceDetectorCnnInner
+    inner: FaceDetectorCnnInner,
 }
 
 impl FaceDetectorCnn {
@@ -85,9 +82,12 @@ impl FaceDetectorCnn {
         };
 
         if !deserialized {
-            Err(format!("Failed to deserialize '{}'", filename.as_ref().display()))
+            Err(format!(
+                "Failed to deserialize '{}'",
+                filename.as_ref().display()
+            ))
         } else {
-            Ok(Self {inner})
+            Ok(Self { inner })
         }
     }
 
@@ -167,5 +167,13 @@ fn face_detection_test() {
     let locations = detector.face_locations(&matrix);
 
     assert_eq!(locations.len(), 1);
-    assert_eq!(locations[0], Rectangle { left: 305, top: 113, right: 520, bottom: 328 });
+    assert_eq!(
+        locations[0],
+        Rectangle {
+            left: 305,
+            top: 113,
+            right: 520,
+            bottom: 328
+        }
+    );
 }

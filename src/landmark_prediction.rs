@@ -15,7 +15,7 @@ cpp_class!(unsafe struct LandmarkPredictorInner as "shape_predictor");
 /// A face landmark predictor.
 #[derive(Clone)]
 pub struct LandmarkPredictor {
-    inner: LandmarkPredictorInner
+    inner: LandmarkPredictorInner,
 }
 
 impl LandmarkPredictor {
@@ -40,9 +40,12 @@ impl LandmarkPredictor {
         };
 
         if !deserialized {
-            Err(format!("Failed to deserialize '{}'", filename.as_ref().display()))
+            Err(format!(
+                "Failed to deserialize '{}'",
+                filename.as_ref().display()
+            ))
         } else {
-            Ok(Self {inner})
+            Ok(Self { inner })
         }
     }
 

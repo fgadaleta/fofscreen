@@ -53,21 +53,12 @@ sudo ldconfig
 `sudo apt-get install -y libuvc-dev `
 
 
-
-
 ### Build and Run
 
 Build all workspaces. From root
 
-`cargo build --features download-models --workspace`
+`cargo build --features download-models`
 
-(To compile different workspaces with different features
+Run with
 
-`--features="<workspacename>/<featname>"` )
-
-
-## Benchmarking
-
-From `detect`
-
-`cargo bench --features download-models -- --nocapture`
+`./target/debug/./main --reference images -r 15`

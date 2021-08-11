@@ -5,17 +5,18 @@ extern crate test;
 #[macro_use]
 extern crate lazy_static;
 use fofscreen::face_detection::*;
-use fofscreen::landmark_prediction::*;
 use fofscreen::face_encoding::*;
 use fofscreen::image_matrix::*;
+use fofscreen::landmark_prediction::*;
 
-
-use image::{RgbImage};
+use image::RgbImage;
 use std::path::*;
 use test::Bencher;
 
 fn load_image(filename: &str) -> RgbImage {
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("benches").join(filename);
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("benches")
+        .join(filename);
     dbg!("Loading file ", &path);
     image::open(&path).unwrap().to_rgb()
 }
@@ -25,10 +26,8 @@ lazy_static! {
     static ref DETECTOR_CNN: FaceDetectorCnn = FaceDetectorCnn::default();
     static ref PREDICTOR: LandmarkPredictor = LandmarkPredictor::default();
     static ref MODEL: FaceEncodingNetwork = FaceEncodingNetwork::default();
-
     static ref OBAMA_1: RgbImage = load_image("obama_1.jpg");
     static ref OBAMA_2: RgbImage = load_image("obama_2.jpg");
-
     static ref OBAMA_1_MATRIX: ImageMatrix = ImageMatrix::from_image(&OBAMA_1);
     static ref OBAMA_2_MATRIX: ImageMatrix = ImageMatrix::from_image(&OBAMA_2);
 }
@@ -63,9 +62,7 @@ fn bench_image_matrix_loading(bencher: &mut Bencher) {
 fn bench_face_detection(bencher: &mut Bencher) {
     initialize();
 
-    bencher.iter(|| {
-        assert_eq!(DETECTOR.face_locations(&OBAMA_1_MATRIX).len(), 1)
-    });
+    bencher.iter(|| assert_eq!(DETECTOR.face_locations(&OBAMA_1_MATRIX).len(), 1));
 }
 
 // This benchmark is super slow to run, so turn it off by default
@@ -85,9 +82,7 @@ fn bench_face_landmark_detection(bencher: &mut Bencher) {
     let rect = DETECTOR.face_locations(&OBAMA_1_MATRIX)[0];
     dbg!(&rect);
 
-    bencher.iter(|| {
-        PREDICTOR.face_landmarks(&OBAMA_1_MATRIX, &rect)
-    });
+    bencher.iter(|| PREDICTOR.face_landmarks(&OBAMA_1_MATRIX, &rect));
 }
 
 #[bench]
@@ -97,9 +92,7 @@ fn bench_face_encoding(bencher: &mut Bencher) {
     let rect = DETECTOR.face_locations(&OBAMA_1_MATRIX)[0];
     let landmarks = PREDICTOR.face_landmarks(&OBAMA_1_MATRIX, &rect);
 
-    bencher.iter(|| {
-        MODEL.get_face_encodings(&OBAMA_1_MATRIX, &[landmarks.clone()], 0)
-    });
+    bencher.iter(|| MODEL.get_face_encodings(&OBAMA_1_MATRIX, &[landmarks.clone()], 0));
 }
 
 #[bench]

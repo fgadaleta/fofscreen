@@ -15,27 +15,28 @@
 
 // Ignore the `forget_copy` clippy lint to remove noise from `cargo clippy` output
 #![cfg_attr(feature = "cargo-clippy", allow(forget_copy))]
-
-#![recursion_limit="1024"]
+#![recursion_limit = "1024"]
 #[macro_use]
 extern crate cpp;
 extern crate image;
 
-pub mod image_matrix;
 pub mod face_detection;
-pub mod landmark_prediction;
 pub mod face_encoding;
+pub mod image_matrix;
+pub mod landmark_prediction;
 
 pub mod capture;
 
 pub use image_matrix::*;
 
-use std::path::*;
 use std::ffi::*;
+use std::path::*;
 
 #[cfg(feature = "download-models")]
 pub fn path_for_file(filename: &str) -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("files").join(filename)
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("files")
+        .join(filename)
 }
 
 pub fn path_as_cstring(path: &Path) -> Result<CString, String> {
@@ -52,7 +53,7 @@ pub fn path_as_cstring(path: &Path) -> Result<CString, String> {
 /// A 2D Point.
 pub struct Point {
     pub x: i64,
-    pub y: i64
+    pub y: i64,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -62,10 +63,10 @@ pub struct Rectangle {
     pub left: u64,
     pub top: u64,
     pub right: u64,
-    pub bottom: u64
+    pub bottom: u64,
 }
 
-cpp!{{
+cpp! {{
     #include <dlib/image_processing/frontal_face_detector.h>
     #include <dlib/image_processing/full_object_detection.h>
     #include <dlib/dnn.h>
@@ -150,5 +151,5 @@ fn test_point() {
         })
     };
 
-    assert_eq!(point, Point {x: -1000, y: -1000});
+    assert_eq!(point, Point { x: -1000, y: -1000 });
 }
