@@ -17,11 +17,9 @@ These include:
 
 ## Building
 
-face_recognition requires dlib to be installed.
+`fofscreen` requires dlib to be installed.
 
-on (atleast) OSX, I _believe_ lapack and openblas also need to be installed.
-
-face_recognition includes a `download-models` feature flag that can be used with `cargo build --features download-models`.
+`fofscreen` includes a `download-models` feature flag that can be used with `cargo build --features download-models`.
 
 This will automatically download the face predictor, cnn face detector and face encoding neural network models (the fhog face detector is included in dlib and does not need to be downloaded). Alternatively, these models can be downloaded manually:
 
