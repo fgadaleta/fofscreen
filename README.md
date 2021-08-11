@@ -1,4 +1,10 @@
-# Fuck off my screen
+# F(uck)of(f my )screen
+
+`fofscreen` is a tool that
+* captures frames from any video device (compatible with libuvc and v4l),
+* recognizes faces and
+* sends you alerts when intruders are sitting in front of your computer
+
 
 Inspired by [a similar python library](https://github.com/ageitgey/face_recognition), face_recognition is a Rust library that binds to certain specific features of the [dlib C++ library](https://github.com/davisking/dlib).
 
