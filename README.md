@@ -65,4 +65,6 @@ Build all workspaces. From root
 
 Run with
 
-`./target/debug/./main --reference images -r 15`
+`./target/debug/./fofscreen --reference images -r 15`
+
+where `images` is a directory with reference images (jpg, png)
