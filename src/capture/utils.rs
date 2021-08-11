@@ -1,19 +1,15 @@
 use flume::Receiver;
-use glium::{Display,
-            IndexBuffer,
-            Surface,
-            Texture2d,
-            VertexBuffer,
-            implement_vertex,
-            index::{self, PrimitiveType},
-            program,
-            texture::RawImage2d,
-            uniform};
+use glium::{
+    implement_vertex,
+    index::{self, PrimitiveType},
+    program,
+    texture::RawImage2d,
+    uniform, Display, IndexBuffer, Surface, Texture2d, VertexBuffer,
+};
 use glutin::{event_loop::EventLoop, window::WindowBuilder, ContextBuilder};
+use image::{ImageBuffer, Rgb};
 use nokhwa::{Camera, CaptureAPIBackend, FrameFormat};
 use std::time::Instant;
-use image::{ImageBuffer, Rgb};
-
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
@@ -21,22 +17,26 @@ pub struct Vertex {
     tex_coords: [f32; 2],
 }
 
-
 /// Loop on device and capture frames
 ///
-pub fn capture_loop(index: usize,
-                    width: u32,
-                    height:u32,
-                    fps: u32,
-                    format: FrameFormat,
-                    backend_value: CaptureAPIBackend,
-                    query_device: bool) -> Receiver<ImageBuffer<Rgb<u8>, Vec<u8>>> {
+pub fn capture_loop(
+    index: usize,
+    width: u32,
+    height: u32,
+    fps: u32,
+    format: FrameFormat,
+    backend_value: CaptureAPIBackend,
+    query_device: bool,
+) -> Receiver<ImageBuffer<Rgb<u8>, Vec<u8>>> {
+    let mut frame_no: usize = 0;
+    let print_every: usize = 100;
 
     let (send, recv) = flume::unbounded();
     // spawn a thread for capture
     std::thread::spawn(move || {
         {
-            let mut camera = Camera::new_with(index, width, height, fps, format, backend_value).unwrap();
+            let mut camera =
+                Camera::new_with(index, width, height, fps, format, backend_value).unwrap();
 
             if query_device {
                 match camera.compatible_fourcc() {
@@ -66,34 +66,38 @@ pub fn capture_loop(index: usize,
             loop {
                 let frame = camera.frame().unwrap();
 
-                println!(
-                    "Captured frame {}x{} @ {}FPS size {}",
-                    frame.width(),
-                    frame.height(),
-                    fps,
-                    frame.len()
-                );
+                if frame_no % print_every == 0 {
+                    println!(
+                        "Captured frame {}x{} @ {}FPS size {}",
+                        frame.width(),
+                        frame.height(),
+                        fps,
+                        frame.len()
+                    );
+                }
+                frame_no += 1;
+
                 send.send(frame).unwrap()
             }
         }
         // IP Camera
         // else {
-            // dbg!("ip camera not supported");
-            // let ip_camera =
-            //     NetworkCamera::new(matches_clone.value_of("capture").unwrap().to_string())
-            //         .expect("Invalid IP!");
-            // ip_camera.open_stream().unwrap();
-            // loop {
-            //     let frame = ip_camera.frame().unwrap();
-            //     println!(
-            //         "Captured frame {}x{} @ {}FPS size {}",
-            //         frame.width(),
-            //         frame.height(),
-            //         fps,
-            //         frame.len()
-            //     );
-            //     send.send(frame).unwrap();
-            // }
+        // dbg!("ip camera not supported");
+        // let ip_camera =
+        //     NetworkCamera::new(matches_clone.value_of("capture").unwrap().to_string())
+        //         .expect("Invalid IP!");
+        // ip_camera.open_stream().unwrap();
+        // loop {
+        //     let frame = ip_camera.frame().unwrap();
+        //     println!(
+        //         "Captured frame {}x{} @ {}FPS size {}",
+        //         frame.width(),
+        //         frame.height(),
+        //         fps,
+        //         frame.len()
+        //     );
+        //     send.send(frame).unwrap();
+        // }
         // }
     });
     recv
@@ -101,7 +105,7 @@ pub fn capture_loop(index: usize,
 
 /// Display frame to openGL window
 ///
-pub fn display_frames(recv: Receiver<ImageBuffer<Rgb<u8>, Vec<u8>>> ) {
+pub fn display_frames(recv: Receiver<ImageBuffer<Rgb<u8>, Vec<u8>>>) {
     let gl_event_loop = EventLoop::new();
     let window_builder = WindowBuilder::new();
     let context_builder = ContextBuilder::new().with_vsync(true);
@@ -210,6 +214,9 @@ pub fn display_frames(recv: Receiver<ImageBuffer<Rgb<u8>, Vec<u8>>> ) {
             },
             _ => {}
         }
-        println!("Took {}ms to capture", after_capture.duration_since(before_capture).as_millis())
+        println!(
+            "Took {}ms to capture",
+            after_capture.duration_since(before_capture).as_millis()
+        )
     })
 }

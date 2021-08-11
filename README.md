@@ -13,9 +13,6 @@ These include:
 
 face_recognition requires dlib to be installed.
 
-
-
-
 on (atleast) OSX, I _believe_ lapack and openblas also need to be installed.
 
 face_recognition includes a `download-models` feature flag that can be used with `cargo build --features download-models`.
@@ -56,21 +53,12 @@ sudo ldconfig
 `sudo apt-get install -y libuvc-dev `
 
 
-
-
 ### Build and Run
 
 Build all workspaces. From root
 
-`cargo build --features download-models --workspace`
+`cargo build --features download-models`
 
-(To compile different workspaces with different features
+Run with
 
-`--features="<workspacename>/<featname>"` )
-
-
-## Benchmarking
-
-From `detect`
-
-`cargo bench --features download-models -- --nocapture`
+`./target/debug/./main --reference images -r 15`

@@ -2,9 +2,28 @@ extern crate clap;
 extern crate nokhwa;
 
 use clap::{App, Arg};
-use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
 use fofscreen::capture::utils::{capture_loop, display_frames};
+use fofscreen::face_detection::*;
+use fofscreen::face_encoding::*;
+use fofscreen::image_matrix::*;
+use fofscreen::landmark_prediction::*;
+use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
 
+use image::RgbImage;
+use std::path::*;
+use std::time::{Duration, SystemTime};
+use std::{env, fs};
+
+#[macro_use]
+extern crate lazy_static;
+
+fn load_image(filename: &str, path: &str) -> RgbImage {
+    let filepath = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(path)
+        .join(filename);
+    dbg!("Loading file ", &filepath);
+    image::open(&filepath).unwrap().to_rgb()
+}
 
 fn main() {
     let matches = App::new("fofscreen")
@@ -66,11 +85,31 @@ fn main() {
             .help("Set the capture backend. Pass AUTO for automatic backend, UVC to query using UVC, V4L to query using Video4Linux, GST to query using Gstreamer, OPENCV to use OpenCV.")
             .default_value("AUTO")
             .takes_value(true))
+
+        .arg(Arg::with_name("reference")
+            // .short("f")
+            .long("reference")
+            .help("Pass a directory of reference face images")
+            .takes_value(true))
+
         .arg(Arg::with_name("display")
             .short("d")
             .long("display")
             .help("Pass to open a window and display.")
             .takes_value(false)).get_matches();
+
+    println!("Initializing recognition engine...");
+    let DETECTOR: FaceDetector = FaceDetector::default();
+    let DETECTOR_CNN: FaceDetectorCnn = FaceDetectorCnn::default();
+    let PREDICTOR: LandmarkPredictor = LandmarkPredictor::default();
+    let MODEL: FaceEncodingNetwork = FaceEncodingNetwork::default();
+    println!("done.");
+
+    let mut reference_matrix: Vec<ImageMatrix> = vec![];
+    let mut reference_encodings: Vec<FaceEncoding> = vec![];
+
+    let mut frame_no = 0;
+    let print_every = 10;
 
     // Query example
     if matches.is_present("query") {
@@ -134,23 +173,85 @@ fn main() {
             }
         };
 
+        let reference = matches.value_of("reference").unwrap();
+        let reference_path = Path::new(reference);
+
+        println!(
+            "Loading reference images from {}",
+            &reference_path.to_str().unwrap()
+        );
+        for entry in fs::read_dir(reference_path).unwrap() {
+            let path = entry.unwrap().path();
+            let filename = path.file_name();
+            // let pp = path.to_str().unwrap();
+            if let Some(imagename) = filename {
+                // println!("Found image {:?}", &imagename.to_string());
+                let reference_rgb_image: RgbImage = load_image(
+                    &imagename.to_str().unwrap(),
+                    reference_path.to_str().unwrap(),
+                );
+                let ref_image_matrix = ImageMatrix::from_image(&reference_rgb_image);
+                let ref_locations = DETECTOR.face_locations(&ref_image_matrix);
+                let ref_rect = ref_locations[0];
+                let ref_landmarks = PREDICTOR.face_landmarks(&ref_image_matrix, &ref_rect);
+                let ref_encoding =
+                    &MODEL.get_face_encodings(&ref_image_matrix, &[ref_landmarks], 0)[0];
+
+                reference_matrix.push(ref_image_matrix);
+                reference_encodings.push(ref_encoding.clone());
+            }
+        }
+        println!("Found {} reference images", reference_encodings.len());
+
+        // TODO pass directory of reference faces and create a vector of encodings
+        // TODO later check current frame encoding with vector of encodings and return the first found
+
+        // Start capturing frames
         let recv = capture_loop(0, width, height, fps, format, backend_value, true);
 
         // run glium
         if matches.is_present("display") {
             let _ = display_frames(recv);
         }
-
         // dont
         else {
             loop {
                 if let Ok(frame) = recv.recv() {
-                    println!(
-                        "Frame width {} height {} size {}",
-                        frame.width(),
-                        frame.height(),
-                        frame.len()
-                    );
+                    if frame_no % print_every == 0 {
+                        println!(
+                            "Frame width {} height {} size {}",
+                            frame.width(),
+                            frame.height(),
+                            frame.len()
+                        );
+                    }
+                    frame_no += 1;
+
+                    let frame_matrix: ImageMatrix = ImageMatrix::from_image(&frame);
+                    let face_locations = DETECTOR.face_locations(&frame_matrix);
+
+                    if face_locations.len() > 0 {
+                        let now = SystemTime::now();
+                        println!(
+                            "{:?} Frame number {} uh oh found a face...",
+                            &now, &frame_no
+                        );
+                        let rect = face_locations[0];
+                        let frame_landmarks = PREDICTOR.face_landmarks(&frame_matrix, &rect);
+                        let a_encoding =
+                            &MODEL.get_face_encodings(&frame_matrix, &[frame_landmarks], 0)[0];
+
+                        // Calculate distance of precomputed encodings of reference image
+                        println!("Calculating similarities with references...");
+                        let distances = reference_encodings
+                            .iter()
+                            .map(|re| {
+                                let distance = a_encoding.distance(re);
+                                distance
+                            })
+                            .collect::<Vec<f64>>();
+                        println!("Distances from reference images {:?}", &distances);
+                    }
                 } else {
                     println!("Thread terminated, closing!");
                     break;

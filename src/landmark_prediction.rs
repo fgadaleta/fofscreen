@@ -1,21 +1,21 @@
 //! Structs for predicting face landmark locations from images and face rectangles.
 
-// use *;
-use image_matrix::*;
-// pub use crate::image_matrix::*;
-// use crate::*;
-use std::ops::*;
 use std::path::*;
-use std::slice;
+// use *;
+use crate::*;
 
-use cpp::*;
+// use image_matrix::*;
+use crate::image_matrix::*;
+
+use std::ops::*;
+use std::slice;
 
 cpp_class!(unsafe struct LandmarkPredictorInner as "shape_predictor");
 
 /// A face landmark predictor.
 #[derive(Clone)]
 pub struct LandmarkPredictor {
-    inner: LandmarkPredictorInner
+    inner: LandmarkPredictorInner,
 }
 
 impl LandmarkPredictor {
@@ -40,9 +40,12 @@ impl LandmarkPredictor {
         };
 
         if !deserialized {
-            Err(format!("Failed to deserialize '{}'", filename.as_ref().display()))
+            Err(format!(
+                "Failed to deserialize '{}'",
+                filename.as_ref().display()
+            ))
         } else {
-            Ok(Self {inner})
+            Ok(Self { inner })
         }
     }
 

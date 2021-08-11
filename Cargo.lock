@@ -1773,7 +1773,6 @@ dependencies = [
  "thiserror",
  "usb_enumeration",
  "uvc",
- "v4l",
 ]
 
 [[package]]
@@ -3107,26 +3106,6 @@ checksum = "e3675c448fbdc98cbdc4f755a541d41154d153eb3112686be533940ae925eb00"
 dependencies = [
  "bindgen",
  "uvc-src",
-]
-
-[[package]]
-name = "v4l"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f6eca58bca86b4b353b55e18828694f91e83dd7e9c4d7f127515e4687d5a8e9"
-dependencies = [
- "bitflags",
- "libc",
- "v4l2-sys-mit",
-]
-
-[[package]]
-name = "v4l2-sys-mit"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0c932c06df4af1dfb229f604214f2a87993784596ff33ffdadcba1b5519254e"
-dependencies = [
- "bindgen",
 ]
 
 [[package]]

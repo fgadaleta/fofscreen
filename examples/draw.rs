@@ -1,28 +1,28 @@
 extern crate fofscreen;
 extern crate image;
 
-use image::*;
-use fofscreen::*;
 use fofscreen::face_detection::*;
 use fofscreen::landmark_prediction::*;
+use fofscreen::*;
+use image::*;
 
 fn draw_rectangle(image: &mut RgbImage, rect: &Rectangle, colour: Rgb<u8>) {
-    for x in rect.left .. rect.right {
-        image.put_pixel(x as u32, rect.top    as u32, colour);
+    for x in rect.left..rect.right {
+        image.put_pixel(x as u32, rect.top as u32, colour);
         image.put_pixel(x as u32, rect.bottom as u32, colour);
     }
 
-    for y in rect.top .. rect.bottom {
-        image.put_pixel(rect.left  as u32, y as u32, colour);
+    for y in rect.top..rect.bottom {
+        image.put_pixel(rect.left as u32, y as u32, colour);
         image.put_pixel(rect.right as u32, y as u32, colour);
     }
 }
 
 fn draw_point(image: &mut RgbImage, point: &Point, colour: Rgb<u8>) {
-    image.put_pixel(point.x as u32,     point.y as u32,     colour);
-    image.put_pixel(point.x as u32 + 1, point.y as u32,     colour);
+    image.put_pixel(point.x as u32, point.y as u32, colour);
+    image.put_pixel(point.x as u32 + 1, point.y as u32, colour);
     image.put_pixel(point.x as u32 + 1, point.y as u32 + 1, colour);
-    image.put_pixel(point.x as u32,     point.y as u32 + 1, colour);
+    image.put_pixel(point.x as u32, point.y as u32 + 1, colour);
 }
 
 #[cfg(feature = "download-models")]
@@ -37,7 +37,7 @@ fn main() {
 
     let detector = FaceDetector::default();
     let cnn_detector = FaceDetectorCnn::default();
-    let landmarks = LandmarkPredictor ::default();
+    let landmarks = LandmarkPredictor::default();
 
     let red = Rgb([255, 0, 0]);
     let green = Rgb([0, 255, 0]);
