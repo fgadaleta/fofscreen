@@ -1,5 +1,8 @@
 extern crate clap;
 extern crate nokhwa;
+extern crate tch;
+extern crate anyhow;
+// use anyhow::Result;
 
 use clap::{App, Arg};
 use fofscreen::capture::utils::{capture_loop, display_frames};
@@ -7,6 +10,8 @@ use fofscreen::face_detection::*;
 use fofscreen::face_encoding::*;
 use fofscreen::image_matrix::*;
 use fofscreen::landmark_prediction::*;
+use fofscreen::alert::Alert;
+
 use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
 use image::RgbImage;
 use std::path::*;
@@ -106,9 +111,7 @@ fn main() {
     println!("done.");
 
     let mut reference_matrix: Vec<ImageMatrix> = vec![];
-    // let mut reference_encodings: Vec<FaceEncoding> = vec![];
     let mut reference_encodings: HashMap<String, FaceEncoding> = HashMap::new();
-
     let mut frame_no = 0;
     let print_every = 10;
 
@@ -116,7 +119,6 @@ fn main() {
     if matches.is_present("query") {
         let backend_value = matches.value_of("query").unwrap();
         let mut use_backend = CaptureAPIBackend::Auto;
-        // AUTO
         if backend_value == "AUTO" {
             use_backend = CaptureAPIBackend::Auto;
         } else if backend_value == "UVC" {
@@ -177,15 +179,10 @@ fn main() {
         let reference = matches.value_of("reference").unwrap();
         let reference_path = Path::new(reference);
 
-        println!(
-            "Loading reference images from {}",
-            &reference_path.to_str().unwrap()
-        );
+        println!("Loading reference images from {}", &reference_path.to_str().unwrap());
         for entry in fs::read_dir(reference_path).unwrap() {
             let path = entry.unwrap().path();
-            // let filename = path.file_name();
             if let Some(imagename) = path.file_name() {
-                // println!("Found image {:?}", &imagename.to_string());
                 let reference_rgb_image: RgbImage = load_image(
                     &imagename.to_str().unwrap(),
                     reference_path.to_str().unwrap(),
@@ -198,8 +195,6 @@ fn main() {
                     &MODEL.get_face_encodings(&ref_image_matrix, &[ref_landmarks], 0)[0];
 
                 reference_matrix.push(ref_image_matrix);
-                // reference_encodings.push(ref_encoding.clone());
-                // let x = imagename.to_str().unwrap();
                 let name = String::from_str(imagename.to_str().unwrap()).unwrap();
                 reference_encodings.insert(name, ref_encoding.clone());
             }
@@ -208,7 +203,6 @@ fn main() {
 
         // Start capturing frames
         let recv = capture_loop(0, width, height, fps, format, backend_value, true);
-
         // run glium
         if matches.is_present("display") {
             let _ = display_frames(recv);
@@ -243,26 +237,23 @@ fn main() {
 
                         // Calculate distance of precomputed encodings of reference image
                         println!("Calculating similarities with references...");
-
-                        // let distances = reference_encodings
-                        //     .iter()
-                        //     .map(|re| {
-                        //         let distance = a_encoding.distance(re);
-                        //         distance
-                        //     })
-                        //     .collect::<Vec<f64>>();
-
-
                         let distances = reference_encodings
                             .iter()
                             .map(|(name, re)| {
                                 let distance = a_encoding.distance(re);
-                                // let n = name.to_owned();
                                 (name.to_owned(), distance)
                             })
                             .collect::<HashMap<String, f64>>();
 
                         println!("Distances from reference images {:?}", &distances);
+
+                        for (name, dist) in distances.iter() {
+                            if dist > &0.6 {
+                                let alert = Alert::new( frame_no, name.to_owned());
+                                println!("{:?}", &alert);
+                            }
+                        }
+
                     }
                 } else {
                     println!("Thread terminated, closing!");

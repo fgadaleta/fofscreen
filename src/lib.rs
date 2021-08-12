@@ -20,13 +20,16 @@
 extern crate cpp;
 extern crate image;
 
+#[cfg(feature = "torch-backend")]
+use tch::{nn, nn::Module, nn::OptimizerConfig, Device};
+
 pub mod face_detection;
 pub mod face_encoding;
 pub mod image_matrix;
 pub mod landmark_prediction;
 
 pub mod capture;
-
+pub mod alert;
 pub use image_matrix::*;
 
 use std::ffi::*;

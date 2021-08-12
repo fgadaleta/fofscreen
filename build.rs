@@ -10,7 +10,7 @@ fn download_path() -> std::path::PathBuf {
 }
 
 #[cfg(feature = "download-models")]
-fn download_and_unzip(client: &reqwest::Client, url: &str) {
+fn download_and_unzip(client: &reqwest::Client, url: &str, unzip: bool) {
     use bzip2::read::*;
 
     let url: reqwest::Url = url.parse().unwrap();
@@ -31,10 +31,17 @@ fn download_and_unzip(client: &reqwest::Client, url: &str) {
 
     println!("Downloading '{}'...", url);
 
-    let response = client.get(url).send().unwrap();
-    let mut decoded = BzDecoder::new(response);
+    let mut response = client.get(url).send().unwrap();
     let mut file = std::fs::File::create(&path).unwrap();
-    std::io::copy(&mut decoded, &mut file).unwrap();
+
+    if unzip {
+        let mut decoded = BzDecoder::new(response);
+        std::io::copy(&mut decoded, &mut file).unwrap();
+    }
+    else {
+        std::io::copy(&mut response, &mut file).unwrap();
+    }
+
 }
 
 fn main() {
@@ -65,14 +72,38 @@ fn main() {
         download_and_unzip(
             &client,
             "http://dlib.net/files/mmod_human_face_detector.dat.bz2",
+            true
         );
         download_and_unzip(
             &client,
             "http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2",
+            true
         );
         download_and_unzip(
             &client,
             "http://dlib.net/files/dlib_face_recognition_resnet_model_v1.dat.bz2",
+            true
         );
     }
+
+    #[cfg(feature = "torch-backend")]
+    {
+        if !download_path().exists() {
+            std::fs::create_dir(download_path()).unwrap();
+        }
+
+        // Create a client for maintaining connections
+        let client = reqwest::ClientBuilder::new()
+            .gzip(false)
+            .build()
+            .unwrap();
+
+        download_and_unzip(
+                &client,
+                "https://github.com/LaurentMazare/ocaml-torch/releases/download/v0.1-unstable/resnet34.ot",
+                false
+            );
+
+    }
+
 }
