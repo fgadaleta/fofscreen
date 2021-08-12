@@ -12,6 +12,9 @@ use fofscreen::image_matrix::*;
 use fofscreen::landmark_prediction::*;
 use fofscreen::alert::Alert;
 
+#[cfg(feature = "torch-backend")]
+use fofscreen::torch_face_detection::torch_load_model;
+
 use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
 use image::RgbImage;
 use std::path::*;
@@ -109,6 +112,9 @@ fn main() {
     let PREDICTOR: LandmarkPredictor = LandmarkPredictor::default();
     let MODEL: FaceEncodingNetwork = FaceEncodingNetwork::default();
     println!("done.");
+
+    #[cfg(feature = "torch-backend")]
+    let net = torch_load_model("files/resnet34.ot");
 
     let mut reference_matrix: Vec<ImageMatrix> = vec![];
     let mut reference_encodings: HashMap<String, FaceEncoding> = HashMap::new();

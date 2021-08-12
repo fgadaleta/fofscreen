@@ -31,6 +31,7 @@ pub mod landmark_prediction;
 pub mod capture;
 pub mod alert;
 pub use image_matrix::*;
+pub mod torch_face_detection;
 
 use std::ffi::*;
 use std::path::*;
