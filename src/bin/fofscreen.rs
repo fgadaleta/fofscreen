@@ -13,7 +13,7 @@ use fofscreen::landmark_prediction::*;
 use fofscreen::alert::Alert;
 
 #[cfg(feature = "torch-backend")]
-use fofscreen::torch_face_detection::torch_load_model;
+use fofscreen::torch_face_detection::{ torch_load_model,torch_load_image, load_load};
 
 use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
 use image::RgbImage;
@@ -22,6 +22,7 @@ use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 use std::{env, fs};
 use std::collections::HashMap;
+use tch::{Tensor};
 
 
 // #[macro_use]
@@ -34,6 +35,8 @@ fn load_image(filename: &str, path: &str) -> RgbImage {
     // dbg!("Loading file ", &filepath);
     image::open(&filepath).unwrap().to_rgb()
 }
+
+
 
 fn main() {
     let matches = App::new("fofscreen")
@@ -106,15 +109,33 @@ fn main() {
             .help("Pass to open a window and display.")
             .takes_value(false)).get_matches();
 
-    println!("Initializing recognition engine...");
-    let DETECTOR: FaceDetector = FaceDetector::default();
-    let DETECTOR_CNN: FaceDetectorCnn = FaceDetectorCnn::default();
-    let PREDICTOR: LandmarkPredictor = LandmarkPredictor::default();
-    let MODEL: FaceEncodingNetwork = FaceEncodingNetwork::default();
-    println!("done.");
+    /*
+    #[cfg(feature = "torch-backend")] {
+        print!("Loading torch model");
+        let net = torch_load_model("files/resnet18.ot");
+        dbg!(&net);
 
-    #[cfg(feature = "torch-backend")]
-    let net = torch_load_model("files/resnet34.ot");
+        let img = torch_load_image("/home/frag/c0ding/fofscreen/images/25396037_10155230861576527_1208098835509088709_n.jpg");
+        // let img = load_load("/home/frag/c0ding/fofscreen/images/25396037_10155230861576527_1208098835509088709_n.jpg");
+
+        // let output = net.forward_t(&img.unsqueeze(0) , false)
+        //                 .softmax(-1, tch::Kind::Float); // Convert to probability.
+
+        // dbg!(&output);
+
+        let output = net.forward_t(&img.unsqueeze(0) , false);
+        dbg!(&output);
+        dbg!(&output.dim());
+        dbg!(&output.size());
+    }
+    */
+
+    println!("Initializing recognition engine...");
+    let detector: FaceDetector = FaceDetector::default();
+    // let detector_cnn: FaceDetectorCnn = FaceDetectorCnn::default();
+    let predictor: LandmarkPredictor = LandmarkPredictor::default();
+    let model: FaceEncodingNetwork = FaceEncodingNetwork::default();
+    println!("done.");
 
     let mut reference_matrix: Vec<ImageMatrix> = vec![];
     let mut reference_encodings: HashMap<String, FaceEncoding> = HashMap::new();
@@ -194,11 +215,11 @@ fn main() {
                     reference_path.to_str().unwrap(),
                 );
                 let ref_image_matrix = ImageMatrix::from_image(&reference_rgb_image);
-                let ref_locations = DETECTOR.face_locations(&ref_image_matrix);
+                let ref_locations = detector.face_locations(&ref_image_matrix);
                 let ref_rect = ref_locations[0];
-                let ref_landmarks = PREDICTOR.face_landmarks(&ref_image_matrix, &ref_rect);
+                let ref_landmarks = predictor.face_landmarks(&ref_image_matrix, &ref_rect);
                 let ref_encoding =
-                    &MODEL.get_face_encodings(&ref_image_matrix, &[ref_landmarks], 0)[0];
+                    &model.get_face_encodings(&ref_image_matrix, &[ref_landmarks], 0)[0];
 
                 reference_matrix.push(ref_image_matrix);
                 let name = String::from_str(imagename.to_str().unwrap()).unwrap();
@@ -228,7 +249,7 @@ fn main() {
                     frame_no += 1;
 
                     let frame_matrix: ImageMatrix = ImageMatrix::from_image(&frame);
-                    let face_locations = DETECTOR.face_locations(&frame_matrix);
+                    let face_locations = detector.face_locations(&frame_matrix);
 
                     if face_locations.len() > 0 {
                         let now = SystemTime::now();
@@ -237,9 +258,9 @@ fn main() {
                             &now, &frame_no
                         );
                         let rect = face_locations[0];
-                        let frame_landmarks = PREDICTOR.face_landmarks(&frame_matrix, &rect);
+                        let frame_landmarks = predictor.face_landmarks(&frame_matrix, &rect);
                         let a_encoding =
-                            &MODEL.get_face_encodings(&frame_matrix, &[frame_landmarks], 0)[0];
+                            &model.get_face_encodings(&frame_matrix, &[frame_landmarks], 0)[0];
 
                         // Calculate distance of precomputed encodings of reference image
                         println!("Calculating similarities with references...");

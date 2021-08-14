@@ -38,9 +38,10 @@ use std::path::*;
 
 #[cfg(feature = "download-models")]
 pub fn path_for_file(filename: &str) -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("files")
-        .join(filename)
+    println!("DBG from path_for_file");
+    let filepath = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("files").join(filename);
+    dbg!(&filepath);
+    filepath
 }
 
 pub fn path_as_cstring(path: &Path) -> Result<CString, String> {

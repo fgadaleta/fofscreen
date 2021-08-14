@@ -33,6 +33,10 @@ if this feature flag is enabled, the matching structs will have `Default::defaul
 ## Getting started
 
 ### Install dlib
+
+Ubuntu/Debian Linux OS
+
+`sudo apt install libdlib-dev`
 #### Install from Python
 
 `pip install dlib --verbose`
@@ -62,6 +66,14 @@ sudo ldconfig
 Build all workspaces. From root
 
 `cargo build --features download-models`
+
+
+## Where is libtorch?
+`sudo apt install libtorch-dev`
+
+`export LD_LIBRARY_PATH=/home/frag/c0ding/fofscreen/target/debug/build/torch-sys-09e5ff1706274e8f/out/libtorch/libtorch/lib`
+
+`export LIBTORCH=/home/frag/c0ding/fofscreen/target/debug/build/torch-sys-09e5ff1706274e8f/out/libtorch/libtorch/`
 
 Run with
 

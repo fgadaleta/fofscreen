@@ -104,6 +104,12 @@ fn main() {
                 false
             );
 
+        download_and_unzip(
+            &client,
+            "https://github.com/LaurentMazare/ocaml-torch/releases/download/v0.1-unstable/resnet18.ot",
+            false
+        );
+
     }
 
 }
