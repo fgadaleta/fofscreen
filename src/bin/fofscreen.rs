@@ -12,11 +12,11 @@ use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
 use image::RgbImage;
 use std::path::*;
 use std::process::exit;
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 use std::{env, fs};
 
-#[macro_use]
-extern crate lazy_static;
+// #[macro_use]
+// extern crate lazy_static;
 
 fn load_image(filename: &str, path: &str) -> RgbImage {
     let filepath = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
