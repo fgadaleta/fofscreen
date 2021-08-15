@@ -1,32 +1,22 @@
 extern crate clap;
 extern crate nokhwa;
-extern crate tch;
-extern crate anyhow;
-// use anyhow::Result;
 
 use clap::{App, Arg};
 use fofscreen::capture::utils::{capture_loop, display_frames};
 use fofscreen::face_detection::*;
 use fofscreen::face_encoding::*;
-use fofscreen::image_matrix::*;
+use fofscreen::matrix::*;
 use fofscreen::landmark_prediction::*;
-use fofscreen::alert::Alert;
-
-#[cfg(feature = "torch-backend")]
-use fofscreen::torch_face_detection::{ torch_load_model,torch_load_image, load_load};
-
 use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
+
 use image::RgbImage;
 use std::path::*;
-use std::str::FromStr;
+use std::process::exit;
 use std::time::{Duration, SystemTime};
 use std::{env, fs};
-use std::collections::HashMap;
-use tch::{Tensor};
 
-
-// #[macro_use]
-// extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
 
 fn load_image(filename: &str, path: &str) -> RgbImage {
     let filepath = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -36,12 +26,10 @@ fn load_image(filename: &str, path: &str) -> RgbImage {
     image::open(&filepath).unwrap().to_rgb()
 }
 
-
-
 fn main() {
     let matches = App::new("fofscreen")
         .version("0.1.0")
-        .author("frag <francesco@amethix.com>")
+        .author("frag <franccesco@amethix.com>")
         .about("Fuck OfF my SCREEN")
         .arg(Arg::with_name("query")
             .short("q")
@@ -109,36 +97,17 @@ fn main() {
             .help("Pass to open a window and display.")
             .takes_value(false)).get_matches();
 
-    /*
-    #[cfg(feature = "torch-backend")] {
-        print!("Loading torch model");
-        let net = torch_load_model("files/resnet18.ot");
-        dbg!(&net);
-
-        let img = torch_load_image("/home/frag/c0ding/fofscreen/images/25396037_10155230861576527_1208098835509088709_n.jpg");
-        // let img = load_load("/home/frag/c0ding/fofscreen/images/25396037_10155230861576527_1208098835509088709_n.jpg");
-
-        // let output = net.forward_t(&img.unsqueeze(0) , false)
-        //                 .softmax(-1, tch::Kind::Float); // Convert to probability.
-
-        // dbg!(&output);
-
-        let output = net.forward_t(&img.unsqueeze(0) , false);
-        dbg!(&output);
-        dbg!(&output.dim());
-        dbg!(&output.size());
-    }
-    */
-
     println!("Initializing recognition engine...");
-    let detector: FaceDetector = FaceDetector::default();
-    // let detector_cnn: FaceDetectorCnn = FaceDetectorCnn::default();
-    let predictor: LandmarkPredictor = LandmarkPredictor::default();
-    let model: FaceEncodingNetwork = FaceEncodingNetwork::default();
+    let DETECTOR: FaceDetector = FaceDetector::default();
+    // let DETECTOR_CNN: FaceDetectorCnn = FaceDetectorCnn::default();
+    let PREDICTOR: LandmarkPredictor = LandmarkPredictor::default();
+    // let MODEL: FaceEncodingNetwork = FaceEncodingNetwork::default();
+    let MODEL: FaceEncoderNetwork = FaceEncoderNetwork::default();
     println!("done.");
 
     let mut reference_matrix: Vec<ImageMatrix> = vec![];
-    let mut reference_encodings: HashMap<String, FaceEncoding> = HashMap::new();
+    let mut reference_encodings: Vec<FaceEncoding> = vec![];
+
     let mut frame_no = 0;
     let print_every = 10;
 
@@ -146,6 +115,7 @@ fn main() {
     if matches.is_present("query") {
         let backend_value = matches.value_of("query").unwrap();
         let mut use_backend = CaptureAPIBackend::Auto;
+        // AUTO
         if backend_value == "AUTO" {
             use_backend = CaptureAPIBackend::Auto;
         } else if backend_value == "UVC" {
@@ -203,33 +173,47 @@ fn main() {
             }
         };
 
-        let reference = matches.value_of("reference").unwrap();
+        let reference = matches.value_of("reference").unwrap_or("assets");
         let reference_path = Path::new(reference);
 
-        println!("Loading reference images from {}", &reference_path.to_str().unwrap());
+        println!(
+            "Loading reference images from {}",
+            &reference_path.to_str().unwrap()
+        );
+
         for entry in fs::read_dir(reference_path).unwrap() {
             let path = entry.unwrap().path();
-            if let Some(imagename) = path.file_name() {
+            let filename = path.file_name();
+            // let pp = path.to_str().unwrap();
+            if let Some(imagename) = filename {
+                // println!("Found image {:?}", &imagename.to_string());
                 let reference_rgb_image: RgbImage = load_image(
                     &imagename.to_str().unwrap(),
                     reference_path.to_str().unwrap(),
                 );
                 let ref_image_matrix = ImageMatrix::from_image(&reference_rgb_image);
-                let ref_locations = detector.face_locations(&ref_image_matrix);
+                let ref_locations = DETECTOR.face_locations(&ref_image_matrix);
                 let ref_rect = ref_locations[0];
-                let ref_landmarks = predictor.face_landmarks(&ref_image_matrix, &ref_rect);
+                let ref_landmarks = PREDICTOR.face_landmarks(&ref_image_matrix, &ref_rect);
                 let ref_encoding =
-                    &model.get_face_encodings(&ref_image_matrix, &[ref_landmarks], 0)[0];
+                    &MODEL.get_face_encodings(&ref_image_matrix, &[ref_landmarks], 0)[0];
 
                 reference_matrix.push(ref_image_matrix);
-                let name = String::from_str(imagename.to_str().unwrap()).unwrap();
-                reference_encodings.insert(name, ref_encoding.clone());
+                reference_encodings.push(ref_encoding.clone());
             }
+        }
+        if reference_encodings.len() == 0 {
+            println!("No reference images found. Add some faces to recognize!");
+            exit(1);
         }
         println!("Found {} reference images", reference_encodings.len());
 
+        // TODO pass directory of reference faces and create a vector of encodings
+        // TODO later check current frame encoding with vector of encodings and return the first found
+
         // Start capturing frames
         let recv = capture_loop(0, width, height, fps, format, backend_value, true);
+
         // run glium
         if matches.is_present("display") {
             let _ = display_frames(recv);
@@ -249,7 +233,7 @@ fn main() {
                     frame_no += 1;
 
                     let frame_matrix: ImageMatrix = ImageMatrix::from_image(&frame);
-                    let face_locations = detector.face_locations(&frame_matrix);
+                    let face_locations = DETECTOR.face_locations(&frame_matrix);
 
                     if face_locations.len() > 0 {
                         let now = SystemTime::now();
@@ -258,29 +242,20 @@ fn main() {
                             &now, &frame_no
                         );
                         let rect = face_locations[0];
-                        let frame_landmarks = predictor.face_landmarks(&frame_matrix, &rect);
+                        let frame_landmarks = PREDICTOR.face_landmarks(&frame_matrix, &rect);
                         let a_encoding =
-                            &model.get_face_encodings(&frame_matrix, &[frame_landmarks], 0)[0];
+                            &MODEL.get_face_encodings(&frame_matrix, &[frame_landmarks], 0)[0];
 
                         // Calculate distance of precomputed encodings of reference image
                         println!("Calculating similarities with references...");
                         let distances = reference_encodings
                             .iter()
-                            .map(|(name, re)| {
+                            .map(|re| {
                                 let distance = a_encoding.distance(re);
-                                (name.to_owned(), distance)
+                                distance
                             })
-                            .collect::<HashMap<String, f64>>();
-
+                            .collect::<Vec<f64>>();
                         println!("Distances from reference images {:?}", &distances);
-
-                        for (name, dist) in distances.iter() {
-                            if dist > &0.6 {
-                                let alert = Alert::new( frame_no, name.to_owned());
-                                println!("{:?}", &alert);
-                            }
-                        }
-
                     }
                 } else {
                     println!("Thread terminated, closing!");
@@ -289,4 +264,6 @@ fn main() {
             }
         }
     }
+
+
 }
