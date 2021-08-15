@@ -12,11 +12,11 @@ use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
 use image::RgbImage;
 use std::path::*;
 use std::process::exit;
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 use std::{env, fs};
 
-#[macro_use]
-extern crate lazy_static;
+// #[macro_use]
+// extern crate lazy_static;
 
 fn load_image(filename: &str, path: &str) -> RgbImage {
     let filepath = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -98,11 +98,9 @@ fn main() {
             .takes_value(false)).get_matches();
 
     println!("Initializing recognition engine...");
-    let DETECTOR: FaceDetector = FaceDetector::default();
-    // let DETECTOR_CNN: FaceDetectorCnn = FaceDetectorCnn::default();
-    let PREDICTOR: LandmarkPredictor = LandmarkPredictor::default();
-    // let MODEL: FaceEncodingNetwork = FaceEncodingNetwork::default();
-    let MODEL: FaceEncoderNetwork = FaceEncoderNetwork::default();
+    let detector: FaceDetector = FaceDetector::default();
+    let predictor: LandmarkPredictor = LandmarkPredictor::default();
+    let model: FaceEncoderNetwork = FaceEncoderNetwork::default();
     println!("done.");
 
     let mut reference_matrix: Vec<ImageMatrix> = vec![];
@@ -184,19 +182,17 @@ fn main() {
         for entry in fs::read_dir(reference_path).unwrap() {
             let path = entry.unwrap().path();
             let filename = path.file_name();
-            // let pp = path.to_str().unwrap();
             if let Some(imagename) = filename {
-                // println!("Found image {:?}", &imagename.to_string());
                 let reference_rgb_image: RgbImage = load_image(
                     &imagename.to_str().unwrap(),
                     reference_path.to_str().unwrap(),
                 );
                 let ref_image_matrix = ImageMatrix::from_image(&reference_rgb_image);
-                let ref_locations = DETECTOR.face_locations(&ref_image_matrix);
+                let ref_locations = detector.face_locations(&ref_image_matrix);
                 let ref_rect = ref_locations[0];
-                let ref_landmarks = PREDICTOR.face_landmarks(&ref_image_matrix, &ref_rect);
+                let ref_landmarks = predictor.face_landmarks(&ref_image_matrix, &ref_rect);
                 let ref_encoding =
-                    &MODEL.get_face_encodings(&ref_image_matrix, &[ref_landmarks], 0)[0];
+                    &model.get_face_encodings(&ref_image_matrix, &[ref_landmarks], 0)[0];
 
                 reference_matrix.push(ref_image_matrix);
                 reference_encodings.push(ref_encoding.clone());
@@ -233,7 +229,7 @@ fn main() {
                     frame_no += 1;
 
                     let frame_matrix: ImageMatrix = ImageMatrix::from_image(&frame);
-                    let face_locations = DETECTOR.face_locations(&frame_matrix);
+                    let face_locations = detector.face_locations(&frame_matrix);
 
                     if face_locations.len() > 0 {
                         let now = SystemTime::now();
@@ -242,9 +238,9 @@ fn main() {
                             &now, &frame_no
                         );
                         let rect = face_locations[0];
-                        let frame_landmarks = PREDICTOR.face_landmarks(&frame_matrix, &rect);
+                        let frame_landmarks = predictor.face_landmarks(&frame_matrix, &rect);
                         let a_encoding =
-                            &MODEL.get_face_encodings(&frame_matrix, &[frame_landmarks], 0)[0];
+                            &model.get_face_encodings(&frame_matrix, &[frame_landmarks], 0)[0];
 
                         // Calculate distance of precomputed encodings of reference image
                         println!("Calculating similarities with references...");

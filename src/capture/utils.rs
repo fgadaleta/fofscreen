@@ -31,7 +31,9 @@ pub fn capture_loop(
     let mut frame_no: usize = 0;
     let print_every: usize = 100;
 
-    let (send, recv) = flume::unbounded();
+    // let (send, recv) = flume::unbounded();
+    let (send, recv) = flume::bounded(10);
+
     // spawn a thread for capture
     std::thread::spawn(move || {
         {
