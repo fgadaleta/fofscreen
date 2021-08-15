@@ -5,12 +5,13 @@ use clap::{App, Arg};
 use fofscreen::capture::utils::{capture_loop, display_frames};
 use fofscreen::face_detection::*;
 use fofscreen::face_encoding::*;
-use fofscreen::image_matrix::*;
+use fofscreen::matrix::*;
 use fofscreen::landmark_prediction::*;
 use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
 
 use image::RgbImage;
 use std::path::*;
+use std::process::exit;
 use std::time::{Duration, SystemTime};
 use std::{env, fs};
 
@@ -21,7 +22,7 @@ fn load_image(filename: &str, path: &str) -> RgbImage {
     let filepath = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join(path)
         .join(filename);
-    dbg!("Loading file ", &filepath);
+    // dbg!("Loading file ", &filepath);
     image::open(&filepath).unwrap().to_rgb()
 }
 
@@ -85,13 +86,11 @@ fn main() {
             .help("Set the capture backend. Pass AUTO for automatic backend, UVC to query using UVC, V4L to query using Video4Linux, GST to query using Gstreamer, OPENCV to use OpenCV.")
             .default_value("AUTO")
             .takes_value(true))
-
         .arg(Arg::with_name("reference")
             // .short("f")
             .long("reference")
             .help("Pass a directory of reference face images")
             .takes_value(true))
-
         .arg(Arg::with_name("display")
             .short("d")
             .long("display")
@@ -100,9 +99,10 @@ fn main() {
 
     println!("Initializing recognition engine...");
     let DETECTOR: FaceDetector = FaceDetector::default();
-    let DETECTOR_CNN: FaceDetectorCnn = FaceDetectorCnn::default();
+    // let DETECTOR_CNN: FaceDetectorCnn = FaceDetectorCnn::default();
     let PREDICTOR: LandmarkPredictor = LandmarkPredictor::default();
-    let MODEL: FaceEncodingNetwork = FaceEncodingNetwork::default();
+    // let MODEL: FaceEncodingNetwork = FaceEncodingNetwork::default();
+    let MODEL: FaceEncoderNetwork = FaceEncoderNetwork::default();
     println!("done.");
 
     let mut reference_matrix: Vec<ImageMatrix> = vec![];
@@ -173,13 +173,14 @@ fn main() {
             }
         };
 
-        let reference = matches.value_of("reference").unwrap();
+        let reference = matches.value_of("reference").unwrap_or("assets");
         let reference_path = Path::new(reference);
 
         println!(
             "Loading reference images from {}",
             &reference_path.to_str().unwrap()
         );
+
         for entry in fs::read_dir(reference_path).unwrap() {
             let path = entry.unwrap().path();
             let filename = path.file_name();
@@ -200,6 +201,10 @@ fn main() {
                 reference_matrix.push(ref_image_matrix);
                 reference_encodings.push(ref_encoding.clone());
             }
+        }
+        if reference_encodings.len() == 0 {
+            println!("No reference images found. Add some faces to recognize!");
+            exit(1);
         }
         println!("Found {} reference images", reference_encodings.len());
 
@@ -259,4 +264,6 @@ fn main() {
             }
         }
     }
+
+
 }

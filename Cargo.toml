@@ -3,29 +3,41 @@ authors = ["frag <francesco@amethix.com>"]
 name = "fofscreen"
 version = "0.1.0"
 edition = "2018"
-# build = "build.rs"
+build = "build.rs"
 
-[dependencies]
-clap = "2.33.3"
-nokhwa = { version = "0.3.0", features = ["input-uvc"] }
-glium = "0.30.0"
-glutin = "0.27.0"
-flume = "0.10.7"
-cpp = "0.5.4"
-image = "0.23.4"
-lazy_static = "1.4.0"
+include = [
+    "src/**/*.rs",
+    "build.rs",
+    "Cargo.toml",
+    "LICENSE",
+]
 
-# [workspace]
-# members = ["capture", "detect"]
-
-[build-dependencies]
-cpp_build = "0.5.4"
-reqwest = {version = "0.9.3", optional = true}
-bzip2 = { version = "0.3.3", optional = true }
-
-# [dev-dependencies]
-# lazy_static = "1.4.0"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
 default = []
-download-models = ["reqwest", "bzip2"]
+
+embed-all = ["embed-fd-nn", "embed-fe-nn", "embed-lp"]
+embed-any = ["reqwest", "bzip2"]
+
+embed-fd-nn = ["embed-any"]
+embed-fe-nn = ["embed-any"]
+embed-lp = ["embed-any"]
+
+[dependencies]
+cpp = "0.5"
+image = "0.23"
+clap = "2.33.3"
+nokhwa = { version = "0.3.0", features = ["input-v4l"] }
+flume = "0.10.8"
+glium = "0.30.0"
+glutin = "0.27.0"
+lazy_static = "1.4.0"
+
+[build-dependencies]
+cpp_build = "0.5"
+bzip2 = { version = "0.3", optional = true }
+reqwest = { version = "0.9", optional = true }
+
+[dev-dependencies]
+lazy_static = "1.4"

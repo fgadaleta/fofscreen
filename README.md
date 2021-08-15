@@ -1,4 +1,10 @@
-# Fuck off my screen
+# F(uck)of(f my )screen
+
+`fofscreen` is a tool that
+* captures frames from any video device (compatible with libuvc and v4l),
+* recognizes faces and
+* sends you alerts when intruders are sitting in front of your computer
+
 
 Inspired by [a similar python library](https://github.com/ageitgey/face_recognition), face_recognition is a Rust library that binds to certain specific features of the [dlib C++ library](https://github.com/davisking/dlib).
 
@@ -11,11 +17,9 @@ These include:
 
 ## Building
 
-face_recognition requires dlib to be installed.
+`fofscreen` requires dlib to be installed.
 
-on (atleast) OSX, I _believe_ lapack and openblas also need to be installed.
-
-face_recognition includes a `download-models` feature flag that can be used with `cargo build --features download-models`.
+`fofscreen` includes a `download-models` feature flag that can be used with `cargo build --features download-models`.
 
 This will automatically download the face predictor, cnn face detector and face encoding neural network models (the fhog face detector is included in dlib and does not need to be downloaded). Alternatively, these models can be downloaded manually:
 
@@ -29,6 +33,10 @@ if this feature flag is enabled, the matching structs will have `Default::defaul
 ## Getting started
 
 ### Install dlib
+
+Ubuntu/Debian Linux OS
+
+`sudo apt install libdlib-dev`
 #### Install from Python
 
 `pip install dlib --verbose`
@@ -59,6 +67,16 @@ Build all workspaces. From root
 
 `cargo build --features download-models`
 
+
+## Where is libtorch?
+`sudo apt install libtorch-dev`
+
+`export LD_LIBRARY_PATH=/home/frag/c0ding/fofscreen/target/debug/build/torch-sys-09e5ff1706274e8f/out/libtorch/libtorch/lib`
+
+`export LIBTORCH=/home/frag/c0ding/fofscreen/target/debug/build/torch-sys-09e5ff1706274e8f/out/libtorch/libtorch/`
+
 Run with
 
-`./target/debug/./main --reference images -r 15`
+`./target/debug/./fofscreen --reference images -r 15`
+
+where `images` is a directory with reference images (jpg, png)

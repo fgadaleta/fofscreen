@@ -1,10 +1,6 @@
-extern crate fofscreen;
-extern crate image;
-
-use fofscreen::face_detection::*;
-use fofscreen::landmark_prediction::*;
-use fofscreen::*;
 use image::*;
+
+use dlib_face_recognition::*;
 
 fn draw_rectangle(image: &mut RgbImage, rect: &Rectangle, colour: Rgb<u8>) {
     for x in rect.left..rect.right {
@@ -25,12 +21,18 @@ fn draw_point(image: &mut RgbImage, point: &Point, colour: Rgb<u8>) {
     image.put_pixel(point.x as u32, point.y as u32 + 1, colour);
 }
 
-#[cfg(feature = "download-models")]
+fn tick<R>(name: &str, f: impl Fn() -> R) -> R {
+    let now = std::time::Instant::now();
+    let result = f();
+    println!("[{}] elapsed time: {}ms", name, now.elapsed().as_millis());
+    result
+}
+
+#[cfg(feature = "embed-all")]
 fn main() {
     let mut args = std::env::args().skip(1);
     let input = args.next().unwrap();
     let output = args.next().unwrap();
-    dbg!("output: ", &output);
 
     let mut image = image::open(input).unwrap().to_rgb();
     let matrix = ImageMatrix::from_image(&image);
@@ -42,7 +44,7 @@ fn main() {
     let red = Rgb([255, 0, 0]);
     let green = Rgb([0, 255, 0]);
 
-    let face_locations = detector.face_locations(&matrix);
+    let face_locations = tick("FaceDetector", || detector.face_locations(&matrix));
 
     for r in face_locations.iter() {
         draw_rectangle(&mut image, &r, red);
@@ -54,12 +56,14 @@ fn main() {
         }
     }
 
-    let face_locations = cnn_detector.face_locations(&matrix);
+    let face_locations = tick("FaceDetectorCnn", || cnn_detector.face_locations(&matrix));
 
     for r in face_locations.iter() {
         draw_rectangle(&mut image, &r, green);
 
-        let landmarks = landmarks.face_landmarks(&matrix, &r);
+        let landmarks = tick("LandmarkPredictor", || {
+            landmarks.face_landmarks(&matrix, &r)
+        });
 
         for point in landmarks.iter() {
             draw_point(&mut image, &point, green);
@@ -69,7 +73,7 @@ fn main() {
     image.save(&output).unwrap();
 }
 
-#[cfg(not(feature = "download-models"))]
+#[cfg(not(feature = "embed-all"))]
 fn main() {
-    panic!("You need to run this example with '--features download-models'.");
+    panic!("You need to run this example with '--features embed-all'.");
 }
