@@ -79,4 +79,7 @@ Run with
 
 `./target/debug/./fofscreen --reference images -r 15`
 
+`./target/debug/./fofscreen -r 5 -w 640 -q V4L --reference assets`
+
+
 where `images` is a directory with reference images (jpg, png)

@@ -1,3 +1,6 @@
+
+#![feature(total_cmp)]
+
 extern crate clap;
 extern crate nokhwa;
 
@@ -10,6 +13,7 @@ use fofscreen::landmark_prediction::*;
 use nokhwa::{query_devices, CaptureAPIBackend, FrameFormat};
 
 use image::RgbImage;
+use std::collections::HashMap;
 use std::path::*;
 use std::process::exit;
 use std::time::SystemTime;
@@ -24,6 +28,13 @@ fn load_image(filename: &str, path: &str) -> RgbImage {
         .join(filename);
     // dbg!("Loading file ", &filepath);
     image::open(&filepath).unwrap().to_rgb()
+}
+
+fn approx_equal(a: f64, b: f64, decimal_places: u8) -> bool {
+    let factor = 10.0f64.powi(decimal_places as i32);
+    let a = (a * factor).trunc();
+    let b = (b * factor).trunc();
+    a == b
 }
 
 fn main() {
@@ -179,9 +190,14 @@ fn main() {
             &reference_path.to_str().unwrap()
         );
 
+        let mut index = 0;
+        let mut reference_meta = HashMap::new();
+
         for entry in fs::read_dir(reference_path).unwrap() {
             let path = entry.unwrap().path();
-            let filename = path.file_name();
+            let filename = path.file_name().clone();
+            // dbg!(&filename);
+
             if let Some(imagename) = filename {
                 let reference_rgb_image: RgbImage = load_image(
                     &imagename.to_str().unwrap(),
@@ -195,20 +211,28 @@ fn main() {
                     &model.get_face_encodings(&ref_image_matrix, &[ref_landmarks], 0)[0];
 
                 reference_matrix.push(ref_image_matrix);
+
+                println!("Adding reference encoding {}", index);
+                reference_meta.insert(index, imagename.to_owned());
+
                 reference_encodings.push(ref_encoding.clone());
+                index += 1;
             }
         }
+
         if reference_encodings.len() == 0 {
             println!("No reference images found. Add some faces to recognize!");
             exit(1);
         }
+
         println!("Found {} reference images", reference_encodings.len());
+        // dbg!(&reference_encodings);
 
         // TODO pass directory of reference faces and create a vector of encodings
         // TODO later check current frame encoding with vector of encodings and return the first found
 
         // Start capturing frames
-        let recv = capture_loop(0, width, height, fps, format, backend_value, true);
+        let recv = capture_loop(4, width, height, fps, format, backend_value, true);
 
         // run glium
         if matches.is_present("display") {
@@ -216,6 +240,8 @@ fn main() {
         }
         // dont
         else {
+            // dbg!(&reference_meta);
+
             loop {
                 if let Ok(frame) = recv.recv() {
                     if frame_no % print_every == 0 {
@@ -252,6 +278,18 @@ fn main() {
                             })
                             .collect::<Vec<f64>>();
                         println!("Distances from reference images {:?}", &distances);
+
+                        // let mut min_value = distances.iter().fold(0.0f64, |min, &val| if val < min{ val } else{ min });
+                        let min_value: Option<&f64> = distances.iter().min_by(|a, b| a.total_cmp(b));
+                        let min_value = *min_value.unwrap();
+                        let index = distances.iter().position(|&r | approx_equal(r, min_value, 4) ).unwrap();
+                        let whoisthis = reference_meta.get(&index);
+
+                        println!("--------------------------------------------------------");
+                        println!("Hello {}", &whoisthis.unwrap().to_string_lossy());
+                        println!("I see you :P ");
+                        println!("--------------------------------------------------------");
+
                     }
                 } else {
                     println!("Thread terminated, closing!");
