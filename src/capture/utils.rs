@@ -32,7 +32,7 @@ pub fn capture_loop(
     let print_every: usize = 100;
 
     // let (send, recv) = flume::unbounded();
-    let (send, recv) = flume::bounded(10);
+    let (send, recv) = flume::bounded(1);
 
     // spawn a thread for capture
     std::thread::spawn(move || {
